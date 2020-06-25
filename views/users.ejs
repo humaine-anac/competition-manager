@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HUMAINE Competition Agents</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="/normalize.css" type="text/css" />
+    <link rel="stylesheet" href="/style.css" type="text/css" />
+    <style>
+table {
+    border-spacing: 0px;
+}
+td,th {
+    border: 1px solid black;
+    padding: 5px;
+}
+    </style>
+</head>
+
+<body>
+    <h1>HUMAINE Competition Users</h1>
+    <%- include('partials/nav.ejs', {user: user}) %>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>email</th>
+                <th>code</th>
+                <th>admin</th>
+                <th>options</th>
+            </tr>
+        </thead>
+        <tbody>
+        <% for (const user of users) { %>
+            <tr>
+                <td><%= user.id %></td>
+                <td><%= user.email %></td>
+                <td><%= user.code %></td>
+                <td><%= user.admin ? 'Yes' : 'No' %></td>
+                <td><a href='/user/<%= user.id %>'>User Page</a> | <a href='/user/<%= user.id %>/delete'>Delete</a></td>
+            </tr>
+        <% } %>
+        </tbody>
+    </table>
+    <h2>Add User</h2>
+    <form action="/users" method="POST">
+        <div>
+            Email: <input type='text' name='email' style='width: 400px' placeholder="email..." />
+        </div>
+        <div>
+            Code: <input type='text' name='code' style='width: 400px' placeholder='code...' />
+        </div>
+        <div>
+            Admin: <input type='checkbox' name='admin' />
+        </div>
+        <div>
+            <input type='submit' value='Create' />
+        </div>
+    </form>
+</body>
+</html>

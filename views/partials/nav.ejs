@@ -1,0 +1,6 @@
+<div>
+    Welcome <%= user.email %> (<%= user.id %>)
+</div>
+<% if (user.admin) { %>
+    <%- include('admin_nav.ejs', {user: user}) %>
+<% } %>

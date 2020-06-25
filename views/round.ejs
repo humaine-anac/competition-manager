@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HUMAINE Competition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="/normalize.css" type="text/css" />
+    <link rel="stylesheet" href="/style.css" type="text/css" />
+    <style>
+table {
+    border-spacing: 0px;
+}
+td,th {
+    border: 1px solid black;
+    padding: 5px;
+}
+    </style>
+</head>
+
+<body>
+    <h1>HUMAINE Competition</h1>
+    <div>
+        Round <%= round.id %>
+    </div>
+    <h2>Round Info</h2>
+    <pre><%= JSON.stringify(round, null, 2) %></pre>
+    <script>
+if (!<%= round.completed %>) {
+    let loop;
+    const popup = window.open('<%= competitionUrl %>/#<%= round.id %>', 'competition-ui', '');
+    loop = setInterval(() => {
+        if (popup.closed) {
+            clearInterval(loop);
+            window.location.href = '/user/<%= round.user_id %>/round/<%= round.id %>/details';
+        }
+    }, 1000);
+}
+    </script>
+</body>
+</html>

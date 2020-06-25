@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HUMAINE Competition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="/normalize.css" type="text/css" />
+    <link rel="stylesheet" href="/style.css" type="text/css" />
+    <style>
+table {
+    border-spacing: 0px;
+}
+td,th {
+    border: 1px solid black;
+    padding: 5px;
+}
+    </style>
+</head>
+
+<body>
+    <h1>HUMAINE Competition</h1>
+    <%- include('partials/nav.ejs', {user: user}) %>
+    <% if (user.admin && user.id !== thisUser.id) { %>
+        <div>Viewing user: <b><%= thisUser.email %></b</div>
+    <% } %>
+    <h2>Rounds</h2>
+    <div>
+        <table>
+            <thead>
+                <th>ID</th>
+                <th>Agent 1</th>
+                <th>Agent 2</th>
+                <th>Started?</th>
+                <th>Completed?</th>
+                <th>Start</th>
+                <th>Results</th>
+                <% if (user.admin) { %>
+                    <th>Options</th>
+                <% } %>
+            </thead>
+            <tbody>
+                <% for (const round of rounds) { %>
+                    <tr>
+                        <td><%= round.id %></td>
+                        <td><%= round.agent_one.name %></td>
+                        <td><%= round.agent_two.name %></td>
+                        <td><%= round.started ? 'Yes' : 'No' %></td>
+                        <td><%= round.completed ? 'Yes' : 'No' %></td>
+                        <td><% if (!round.started) { %><a href='/user/<%= thisUser.id %>/round/<%= round.id %>/start'>Start</a><% } %></td>
+                        <td><% if (round.completed) { %><a href='/user/<%= thisUser.id %>/round/<%= round.id %>/results'>Results</a><% } %></td>
+                        <% if (user.admin) { %>
+                            <td><a href='/user/<%= thisUser.id %>/round/<%= round.id %>/reset'>Reset</a> | <a href='/user/<%= thisUser.id %>/round/<%= round.id %>/delete'>Delete</a></td>
+                        <% } %>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+    <% if (user.admin) { %>
+        <h3>Create Round</h3>
+        <div>
+            <form action='/user/<%= thisUser.id %>/round' method='POST'>
+                <div>
+                    Agent 1: <select name='agent_one'>
+                        <% for (const agent of agents) { %>
+                            <option value='<%= agent.id %>'><%= agent.name %></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div>
+                    Agent 2: <select name='agent_two'>
+                        <% for (const agent of agents) { %>
+                            <option value='<%= agent.id %>'><%= agent.name %></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div>
+                    <input type='submit' value='Create' />
+                </div>
+            </form>
+        </div>
+    <% } %>
+</body>
+</html>

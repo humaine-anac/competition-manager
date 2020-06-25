@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HUMAINE Competition Agents</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="/normalize.css" type="text/css" />
+    <link rel="stylesheet" href="/style.css" type="text/css" />
+    <style>
+table {
+    border-spacing: 0px;
+}
+td,th {
+    border: 1px solid black;
+    padding: 5px;
+}
+    </style>
+</head>
+
+<body>
+    <h1>HUMAINE Competition Agents</h1>
+    <%- include('partials/nav.ejs', {user: user}) %>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>cwd</th>
+                <th>run</th>
+                <th>options</th>
+            </tr>
+        </thead>
+        <tbody>
+        <% for (const agent of agents) { %>
+            <tr>
+                <td><%= agent.id %></td>
+                <td><%= agent.name %></td>
+                <td><%= agent.cwd %></td>
+                <td><pre><%= agent.run_cmd %></pre></td>
+                <td><a href='/agents/delete/<%= agent.id %>'>Delete</a></td>
+            </tr>
+        <% } %>
+        </tbody>
+    </table>
+    <h2>Add Agent</h2>
+    <form action="/agents" method="POST">
+        <div>
+            Name: <input type='text' name='name' style='width: 400px' placeholder="name..." />
+        </div>
+        <div>
+            CWD: <input type='text' name='cwd' style='width: 400px' placeholder='/path/to/agent' />
+        </div>
+        <div>
+            Run CMD:<br />
+            <textarea name='run_cmd' rows='20' cols='50'></textarea>
+        </div>
+        <div>
+            <input type='submit' value='Create' />
+        </div>
+    </form>
+</body>
+</html>
