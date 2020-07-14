@@ -24,6 +24,12 @@ const RunningAgent = require('./models/running_agent');
 const app = express();
 const httpServer = http.createServer(app);
 
+const durations = {
+  warmUp: 60,
+  round: 60 * 10,
+  post: 60
+};
+
 let myPort = process.env.PORT || argv.port || 14020;
 let logLevel = 1;
 if (argv.level) {
@@ -415,11 +421,7 @@ app.post('/user/:userId([0-9]+)/round/:roundId([0-9]+)/start', userSessionChecke
     human: {
       utilityFunction: round.utility_functions.human
     },
-    durations: {
-      warmUp: 5,
-      round: 60,
-      post: 60
-    }
+    durations,
   };
 
   const fetchRes = await fetch(optionsToUrl(appSettings.serviceMap['environment-orchestrator'], '/initializeRound'), {
