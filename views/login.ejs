@@ -15,20 +15,26 @@
 </head>
 
 <body>
-    <h1>HUMAINE Competition</h1>
-    Login:
-    <div>
-        <form action="/login" method="POST">
-            <div class='login-field'>
-                Email: <input type='text' name='email' placeholder="Email..." size="30" />
+    <div class='content'>
+        <h1>HUMAINE Competition</h1>
+        <div id='login-box' class='box'>
+            <div class='box-header'>
+                Login
             </div>
-            <div class='login-field'>
-                Access Code: <input type='password' name='code' placeholder="Code..." size="30" />
+            <div class='box-content'>
+                <form action="/login" method="POST">
+                    <div class='login-field'>
+                        Email: <input type='text' name='email' placeholder="Email..." size="30" />
+                    </div>
+                    <div class='login-field'>
+                        Access Code: <input type='password' name='code' placeholder="Code..." size="30" />
+                    </div>
+                    <div>
+                        <input type='submit' value='Login' />
+                    </div>
+                </form>
             </div>
-            <div>
-                <input type='submit' value='Login' />
-            </div>
-        </form>
+        </div>
     </div>
 </body>
 </html>

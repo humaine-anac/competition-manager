@@ -1,3 +1,51 @@
 body {
     margin: 20px;
+    background-color: slategray;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+a {
+    color: #dbdbdb;
+    text-decoration: underline;
+}
+
+.content {
+    width: 650px;
+    margin: auto;
+}
+
+.content > h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.box {
+    color: black;
+    background-color: #CDE2F4;
+    border: 5px solid #DDA448;
+    margin-bottom: 20px;
+}
+
+.box a {
+    color: rgb(63, 63, 63);
+}
+
+.box-header {
+    width: 100%;
+    text-align: center;
+    border-bottom: 5px solid #DDA448;
+    padding: 10px 0;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.box-content {
+    padding: 5px;
+}
+
+#login-box {
+    width: 300px;
+    margin: auto;
+    margin-top: 60px;
 }

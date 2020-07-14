@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" href="/normalize.css" type="text/css" />
     <link rel="stylesheet" href="/style.css" type="text/css" />
+    <script src="/user.js" defer></script>
     <style>
 table {
     border-spacing: 0px;
@@ -18,68 +19,87 @@ td,th {
     </style>
 </head>
 
-<body>
-    <h1>HUMAINE Competition</h1>
-    <%- include('partials/nav.ejs', {user: user}) %>
-    <% if (user.admin && user.id !== thisUser.id) { %>
-        <div>Viewing user: <b><%= thisUser.email %></b</div>
-    <% } %>
-    <h2>Rounds</h2>
-    <div>
-        <table>
-            <thead>
-                <th>ID</th>
-                <th>Agent 1</th>
-                <th>Agent 2</th>
-                <th>Started?</th>
-                <th>Completed?</th>
-                <th>Start</th>
-                <th>Results</th>
-                <% if (user.admin) { %>
-                    <th>Options</th>
-                <% } %>
-            </thead>
-            <tbody>
-                <% for (const round of rounds) { %>
-                    <tr>
-                        <td><%= round.id %></td>
-                        <td><%= round.agent_one.name %></td>
-                        <td><%= round.agent_two.name %></td>
-                        <td><%= round.started ? 'Yes' : 'No' %></td>
-                        <td><%= round.completed ? 'Yes' : 'No' %></td>
-                        <td><% if (!round.started) { %><a href='/user/<%= thisUser.id %>/round/<%= round.id %>/start'>Start</a><% } %></td>
-                        <td><% if (round.completed) { %><a href='/user/<%= thisUser.id %>/round/<%= round.id %>/results'>Results</a><% } %></td>
+<body data-competition-url='<%= competitionUrl %>'>
+    <div class='content'>
+        <h1>HUMAINE Competition</h1>
+        <%- include('partials/nav.ejs', {user: user}) %>
+        <% if (user.admin && user.id !== thisUser.id) { %>
+            <div>Viewing user: <b><%= thisUser.email %></b</div>
+        <% } %>
+        <div class='box'>
+            <div class='box-header'>
+                Rounds
+            </div>
+            <div class='box-content'>
+                <table>
+                    <thead>
+                        <th>ID</th>
+                        <th>Started</th>
+                        <th>Completed</th>
+                        <th>Score</th>
                         <% if (user.admin) { %>
-                            <td><a href='/user/<%= thisUser.id %>/round/<%= round.id %>/reset'>Reset</a> | <a href='/user/<%= thisUser.id %>/round/<%= round.id %>/delete'>Delete</a></td>
+                            <th>Agent 1</th>
+                            <th>Agent 2</th>
+                            <th>Data</th>
+                            <th>Options</th>
                         <% } %>
-                    </tr>
-                <% } %>
-            </tbody>
-        </table>
-    </div>
-    <% if (user.admin) { %>
-        <h3>Create Round</h3>
-        <div>
-            <form action='/user/<%= thisUser.id %>/round' method='POST'>
-                <div>
-                    Agent 1: <select name='agent_one'>
-                        <% for (const agent of agents) { %>
-                            <option value='<%= agent.id %>'><%= agent.name %></option>
+                    </thead>
+                    <tbody>
+                        <% for (let i = 0; i < rounds.length; i++) { %>
+                            <% let round = rounds[i] %>
+                            <tr>
+                                <td><%= thisUser.admin ? round.id : (i + 1) %></td>
+                                <td><%= round.started ? 'Yes' : 'No' %></td>
+                                <td><%= round.completed ? 'Yes' : 'No' %></td>
+                                <td>
+                                    <% if (round.completed) { %>
+
+                                    <% } else if (!round.started) { %>
+                                        <button class='start-round' data-round-id='<%= round.id %>' data-user-id='<%= thisUser.id %>'>Start</a>
+                                    <% } %>
+                                </td>
+                                <% if (user.admin) { %>
+                                    <td><%= round.agent_one.name %></td>
+                                    <td><%= round.agent_two.name %></td>
+                                    <td><a href='/user/<%= thisUser.id %>/round/<%= round.id %>/details'>Data</a></td>
+                                    <td><a href='/user/<%= thisUser.id %>/round/<%= round.id %>/reset'>Reset</a> | <a href='/user/<%= thisUser.id %>/round/<%= round.id %>/delete'>Delete</a></td>
+                                <% } %>
+                            </tr>
                         <% } %>
-                    </select>
-                </div>
-                <div>
-                    Agent 2: <select name='agent_two'>
-                        <% for (const agent of agents) { %>
-                            <option value='<%= agent.id %>'><%= agent.name %></option>
-                        <% } %>
-                    </select>
-                </div>
-                <div>
-                    <input type='submit' value='Create' />
-                </div>
-            </form>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    <% } %>
+
+        <% if (user.admin) { %>
+            <div class='box'>
+                <div class='box-header'>
+                    Create Round
+                </div>
+                <div class='box-content'>
+                    <form action='/user/<%= thisUser.id %>/round' method='POST'>
+                        <div>
+                            Agent 1: <select name='agent_one'>
+                                <% for (const agent of agents) { %>
+                                    <option value='<%= agent.id %>'><%= agent.name %></option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div>
+                            Agent 2: <select name='agent_two'>
+                                <% for (const agent of agents) { %>
+                                    <option value='<%= agent.id %>'><%= agent.name %></option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <br />
+                        <div>
+                            <input type='submit' value='Create' />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        <% } %>
+    </div>
 </body>
 </html>

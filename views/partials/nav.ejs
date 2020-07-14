@@ -1,6 +1,12 @@
-<div>
-    Welcome <%= user.email %> (<%= user.id %>)
+<div style='margin-bottom: 20px'>
+    <div>
+        Welcome <%= user.email %> (<a href='/logout'>Logout</a>)
+    </div>
+
+    <% if (user.admin) { %>
+        <div>
+            <a href='/user/<%= user.id %>'>My Rounds</a> | <a href='/users'>Manage Users</a> | <a href='/agents'>Manage Agents</a>
+        </div>
+    <% } %>
 </div>
-<% if (user.admin) { %>
-    <%- include('admin_nav.ejs', {user: user}) %>
-<% } %>
+

@@ -15,6 +15,10 @@ class Round extends Model {
       json.messages = JSON.parse('[' + json.messages.replace(/,$/, '') + ']');
     }
 
+    if (json.all_messages !== undefined) {
+      json.all_messages = JSON.parse('[' + json.all_messages.replace(/,$/, '') + ']');
+    }
+
     if (json.results) {
       json.results = JSON.parse(json.results);
     }
@@ -33,7 +37,17 @@ class Round extends Model {
       }
       else {
         const stringified = JSON.stringify(json.messages);
-        json.messages = stringified.substring(1, stringified.length - 1) + ','
+        json.messages = stringified.substring(1, stringified.length - 1) + ',';
+      }
+    }
+
+    if (json.all_messages !== undefined) {
+      if (json.all_messages.length === 0) {
+        json.all_messages = '';
+      }
+      else {
+        const stringified = JSON.stringify(json.all_messages);
+        json.all_messages = stringified.substring(1, stringified.length - 1) + ',';
       }
     }
 

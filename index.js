@@ -54,7 +54,7 @@ const sessionChecker = (req, res, next) => {
 };
 
 const userChecker = (req, res, next) => {
-  if (req.params.userId !== req.session.user.id && !req.session.user.admin) {
+  if (parseInt(req.params.userId) !== req.session.user.id && !req.session.user.admin) {
     return res.redirect(`/user/${req.session.user.id}`);
   }
   next();
@@ -66,6 +66,9 @@ const adminChecker = (req, res, next) => {
   }
   res.render('404');
 };
+
+const adminSessionChecker = [sessionChecker, adminChecker];
+const userSessionChecker = [sessionChecker, userChecker];
 
 app.use(express.static(path.join(__dirname, "/static")));
 app.use(express.json());
@@ -82,9 +85,7 @@ app.post('/receiveMessage', async (req, res) => {
   logExpression('Inside /receiveMessage', 2);
   logExpression(req.body, 2);
   const round = await Round.query().findOne({id: req.body.roundId});
-  console.log(round);
   round.messages.push(req.body);
-  console.log(round);
   await Round.query().findById(round.id).patch({messages: round.messages});
   res.json({'status': 'acknowledged'});
 });
@@ -105,19 +106,92 @@ app.post('/receiveRejection', (req, res) => {
   res.json({'status': 'acknowledged'});
 });
 
-app.post('/startRound', (req, res) => {
-  /*
-  logExpression('Inside /startRound', 2);
-  logExpression(req.body, 2);
-  */
+app.post('/receiveLog', async (req, res) => {
+  console.log(req.body);
+  const round = await Round.query().findById(req.body.roundId);
+  if (!round) {
+    return res.json({'status': 'error'});
+  }
+
+  round.all_messages.push(req.body);
+  await Round.query().findById(round.id).patch({all_messages: round.all_messages});
+
   res.json({'status': 'acknowledged'});
 });
 
-app.post('/endRound', async (req, res) => {
+app.post('/startRound', (_, res) => {
+  res.json({'status': 'acknowledged'});
+});
+
+app.post('/endRound', (_, res) => {
+  res.json({'status': 'acknowledged'});
+});
+
+app.post('/sendRoundMetadata', async (req, res) => {
+  const round = await Round.query().withGraphFetched('[user, agent_one, agent_two, running_agents]').findById(req.body.roundId);
+  if (!round) {
+    return res.json({'status': 'error'});
+  }
+
+  const agents = {one: Object.assign({}, round.agent_one), two: Object.assign({}, round.agent_two)};
+  agents.one.port = round.running_agents[0].port;
+  agents.one.run_cmd.args.push('--port', agents.one.port, '--roundId', round.id);
+  agents.two.port = round.running_agents[1].port;
+  agents.two.run_cmd.args.push('--port', agents.two.port, '--roundId', round.id);
+
+  agent_one_process = spawn(agents.one.run_cmd.run, agents.one.run_cmd.args, {
+    cwd: agents.one.cwd,
+    detached: true,
+    stdio: 'ignore',
+  });
+  agent_one_process.unref();
+
+  agent_two_process = spawn(agents.two.run_cmd.run, agents.two.run_cmd.args, {
+    cwd: agents.two.cwd,
+    detached: true,
+    stdio: 'ignore',
+  });
+  agent_two_process.unref();
+
+  const promises = [];
+  promises.push(RunningAgent.query().patch({
+    pid: agent_one_process.pid,
+  }).where({id: round.running_agents[0].id}));
+
+  promises.push(RunningAgent.query().patch({
+    pid: agent_two_process.pid,
+  }).where({id: round.running_agents[1].id}));
+
+  await Promise.all(promises);
   /*
-  logExpression('Inside /endRound', 2);
+  logExpression('Inside /sendRoundMetadata', 2);
   logExpression(req.body, 2);
   */
+  setTimeout(() => {
+    res.json({
+      status: 'acknowledged',
+      agents: [
+        {
+          pid: agent_one_process.pid,
+          port: round.running_agents[0].port
+        },
+        {
+          pid: agent_two_process.pid,
+          port: round.running_agents[1].port
+        }
+      ]
+    });
+  }, 2000);
+});
+
+app.post('/receiveRoundTotals', async (req, res) => {
+  logExpression('Inside /receiveRoundTotals', 2);
+  logExpression(req.body, 2);
+  await Round.query().findById(req.body.roundId).patch({
+    results: req.body,
+    started: true,
+    completed: true,
+  });
 
   const round = await Round.query().findOne({id: req.body.roundId});
   if (!round) {
@@ -134,25 +208,7 @@ app.post('/endRound', async (req, res) => {
     }
   }
   await RunningAgent.query().delete().where({round_id: req.body.roundId});
-  res.json({'status': 'acknowledged'});
-});
 
-app.post('/sendRoundMetadata', (req, res) => {
-  /*
-  logExpression('Inside /sendRoundMetadata', 2);
-  logExpression(req.body, 2);
-  */
-  res.json({'status': 'acknowledged'});
-});
-
-app.post('/receiveRoundTotals', async (req, res) => {
-  logExpression('Inside /receiveRoundTotals', 2);
-  logExpression(req.body, 2);
-  await Round.query().findById(req.body.roundId).patch({
-    results: req.body,
-    started: true,
-    completed: true,
-  });
   res.json({'status': 'acknowledged'});
 });
 
@@ -170,7 +226,6 @@ app.route('/login').get((_, res) => {
     email: req.body.email,
     code: req.body.code,
   });
-  console.log(user);
   if (user) {
     req.session.user = user;
     res.redirect(`/user/${user.id}`);
@@ -180,12 +235,13 @@ app.route('/login').get((_, res) => {
   }
 });
 
-const adminSessionChecker = [sessionChecker, adminChecker];
-const userSessionChecker = [sessionChecker, userChecker];
+app.get('/logout', sessionChecker, async (req, res) => {
+  delete req.session.user;
+  res.redirect('/');
+});
 
 app.route('/agents').get(adminSessionChecker, async (req, res) => {
   const agents = await Agent.query();
-  console.log(agents);
   res.render('agents', {
     user: req.session.user,
     agents
@@ -241,6 +297,7 @@ app.get('/user/:userId([0-9]+)', userSessionChecker, async (req, res) => {
     thisUser: user,
     rounds,
     agents,
+    competitionUrl: optionsToUrl(appSettings.serviceMap['competition-ui']),
   });
 });
 
@@ -264,14 +321,6 @@ app.post('/user/:userId([0-9]+)/round', userSessionChecker, (req, res) => {
     }).then(() => {
       res.redirect(`/user/${req.params.userId}`);
     });
-  });
-});
-
-app.get('/user/:userId([0-9]+)/round/:roundId([0-9]+)', userSessionChecker, async (req, res) => {
-  const round = await Round.query().findOne({id: req.params.roundId, user_id: req.params.userId});
-  res.render('round', {
-    round,
-    competitionUrl: optionsToUrl(appSettings.serviceMap['competition-ui']),
   });
 });
 
@@ -305,6 +354,9 @@ app.get('/user/:userId([0-9]+)/round/:roundId([0-9]+)/reset', adminSessionChecke
 
   const agents = await RunningAgent.query().where({round_id: round.id});
   for (const agent of agents) {
+    if (agent.pid === null) {
+      continue;
+    }
     try {
       process.kill(agent.pid);
     }
@@ -317,13 +369,15 @@ app.get('/user/:userId([0-9]+)/round/:roundId([0-9]+)/reset', adminSessionChecke
     started: false,
     completed: false,
     results: null,
-    messages: []
+    messages: [],
+    all_messages: [],
   }).where({id: round.id});
   res.redirect(`/user/${req.params.userId}`);
 });
 
-app.get('/user/:userId([0-9]+)/round/:roundId([0-9]+)/start', userSessionChecker, async (req, res) => {
+app.post('/user/:userId([0-9]+)/round/:roundId([0-9]+)/start', userSessionChecker, async (req, res) => {
   const round = await Round.query().withGraphFetched('[user, agent_one, agent_two, running_agents]').findOne({id: req.params.roundId, user_id: req.params.userId});
+  const agents = {one: Object.assign({}, round.agent_one), two: Object.assign({}, round.agent_two)};
 
   if (!round) {
     res.json({error: 'could not find round'});
@@ -331,43 +385,14 @@ app.get('/user/:userId([0-9]+)/round/:roundId([0-9]+)/start', userSessionChecker
   }
 
   if (round.completed) {
-    return res.redirect(`/user/${req.params.userId}/round/${req.params.roundId}/results`);
+    return res.json({error: 'round already completed', round});
   }
   else if (round.started) {
     return res.json({error: 'round already started', round});
   }
 
-  const agents = {one: Object.assign({}, round.agent_one), two: Object.assign({}, round.agent_two)};
   agents.one.port = await getPort();
-  agents.one.run_cmd.args.push('--port', agents.one.port);
   agents.two.port = await getPort();
-  agents.two.run_cmd.args.push('--port', agents.two.port);
-
-  agent_one_process = spawn(agents.one.run_cmd.run, agents.one.run_cmd.args, {
-    cwd: agents.one.cwd,
-    detached: true,
-    stdio: 'ignore',
-  });
-  agent_one_process.unref();
-
-  agents_two_process = spawn(agents.two.run_cmd.run, agents.two.run_cmd.args, {
-    cwd: agents.two.cwd,
-    detached: true,
-    stdio: 'ignore',
-  });
-  agents_two_process.unref();
-
-  await RunningAgent.query().insert({
-    round_id: req.params.roundId,
-    pid: agent_one_process.pid,
-    port: agents.one.port
-  });
-
-  await RunningAgent.query().insert({
-    round_id: req.params.roundId,
-    pid: agents_two_process.pid,
-    port: agents.two.port
-  });
 
   const roundData = {
     roundId: round.id,
@@ -404,12 +429,27 @@ app.get('/user/:userId([0-9]+)/round/:roundId([0-9]+)/start', userSessionChecker
   });
   await fetchRes.json();
 
-  await Round.query().patch({
-    started: true
-  }).where({id: round.id});
+  const promises = [];
 
-  res.redirect(`/user/${round.user_id}/round/${round.id}`);
-  //res.redirect(`/user/${round.user_id}`);
+  promises.push(Round.query().patch({
+    started: true
+  }).where({id: round.id}));
+
+  promises.push(RunningAgent.query().insert({
+    round_id: round.id,
+    pid: null,
+    port: agents.one.port
+  }));
+
+  promises.push(RunningAgent.query().insert({
+    round_id: round.id,
+    pid: null,
+    port: agents.two.port
+  }));
+
+  await Promise.all(promises);
+
+  res.json({'status': 'success'});
 });
 
 httpServer.listen(app.get('port'), () => {

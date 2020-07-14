@@ -5,7 +5,7 @@ exports.up = function(knex) {
       table.increments('id');
       table.integer('round_id').unsigned();
       table.foreign('round_id').references('rounds.id');
-      table.integer('pid').unsigned().notNullable();
+      table.integer('pid').unsigned().nullable();
       table.integer('port').unsigned().notNullable();
     })
     .table('rounds', (table) => {
