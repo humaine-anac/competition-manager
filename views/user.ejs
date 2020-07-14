@@ -24,7 +24,7 @@ td,th {
         <h1>HUMAINE Competition</h1>
         <%- include('partials/nav.ejs', {user: user}) %>
         <% if (user.admin && user.id !== thisUser.id) { %>
-            <div>Viewing user: <b><%= thisUser.email %></b</div>
+            <div>Viewing user: <b><%= thisUser.email %></b></div>
         <% } %>
         <div class='box'>
             <div class='box-header'>
