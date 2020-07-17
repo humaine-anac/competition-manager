@@ -96,6 +96,10 @@ app.post('/receiveMessage', async (req, res) => {
   res.json({'status': 'acknowledged'});
 });
 
+app.post('/confirmAccept', (_, res) => {
+  res.json({'status': 'acknowledged'});
+});
+
 app.post('/setUtility', (req, res) => {
   /*
   logExpression('Inside /setUtility', 2);
