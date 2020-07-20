@@ -14,7 +14,7 @@ Array.from(document.getElementsByClassName('start-round')).forEach(element => {
         clearInterval(loop);
         window.location.reload();
       }
-    }, 1000);
+    }, 2000);
     element.remove();
   });
 });
