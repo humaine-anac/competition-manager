@@ -37,7 +37,7 @@ td,th {
                 <td><%= agent.id %></td>
                 <td><%= agent.name %></td>
                 <td><%= agent.cwd %></td>
-                <td><pre><%= agent.run_cmd %></pre></td>
+                <td><pre><%= JSON.stringify(agent.run_cmd, null, 2) %></pre></td>
                 <td><a href='/agents/delete/<%= agent.id %>'>Delete</a></td>
             </tr>
         <% } %>

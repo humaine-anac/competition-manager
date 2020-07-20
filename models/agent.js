@@ -7,7 +7,7 @@ class Agent extends Model {
 
   $parseDatabaseJson(json) {
     json = super.$parseDatabaseJson(json);
-    if (json.run_cmd) {
+    if (json.run_cmd && typeof json.run_cmd === 'string') {
       json.run_cmd = JSON.parse(json.run_cmd);
     }
 
@@ -15,7 +15,7 @@ class Agent extends Model {
   }
 
   $formatDatabaseJson(json) {
-    if (json.run_cmd) {
+    if (json.run_cmd && typeof json.run_cmd !== 'string') {
       json.run_cmd = JSON.stringify(json.run_cmd);
     }
 
