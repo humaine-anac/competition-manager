@@ -55,7 +55,7 @@ td,th {
                                     <% if (round.completed && round.results.roundTotals.Human) { %>
                                         <%= round.results.roundTotals.Human.utility.value %>
                                     <% } else if (!round.started) { %>
-                                        <button class='start-round' data-round-id='<%= round.id %>' data-user-id='<%= thisUser.id %>'>Start</a>
+                                        <button class='start-round' data-round-id='<%= round.id %>' data-round-uuid='<%= round.uuid %>' data-user-id='<%= thisUser.id %>'>Start</a>
                                     <% } %>
                                 </td>
                                 <% if (user.admin) { %>

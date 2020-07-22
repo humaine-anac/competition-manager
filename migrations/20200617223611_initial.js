@@ -17,6 +17,7 @@ exports.up = function(knex) {
     })
     .createTable('rounds', (table) => {
       table.increments('id');
+      table.uuid('uuid').notNullable();
       table.integer('user_id').unsigned();
       table.foreign('user_id').references('users.id');
       table.integer('agent_one_id').unsigned();

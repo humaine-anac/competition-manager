@@ -5,7 +5,7 @@ Array.from(document.getElementsByClassName('start-round')).forEach(element => {
     });
     let loop;
     const windowFeatures = 'menubar=off,toolbar=off,location=off,left=0,top=0screenX=1,screenY=1';
-    const popup = window.open(`${document.body.dataset.competitionUrl}/#${event.target.dataset.roundId}`, 'competition-ui', windowFeatures);
+    const popup = window.open(`${document.body.dataset.competitionUrl}/#${event.target.dataset.roundUuid}`, 'competition-ui', windowFeatures);
     popup.moveTo(0, 0);
     popup.resizeTo(screen.width, screen.height);
 

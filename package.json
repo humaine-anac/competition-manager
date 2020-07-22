@@ -19,6 +19,7 @@
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.0",
     "objection": "^2.2.0",
-    "sqlite3": "^4.2.0"
+    "sqlite3": "^4.2.0",
+    "uuid": "^8.2.0"
   }
 }

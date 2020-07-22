@@ -10,6 +10,7 @@ const http = require('http');
 const { optionsToUrl } = require('@humaine/utils/url');
 const { setLogLevel, logExpression } = require('@cisl/zepto-logger');
 const argv = require('minimist')(process.argv.slice(2));
+const {v4: uuidv4} = require('uuid');
 
 const appSettings = require('./appSettings');
 
@@ -90,7 +91,7 @@ app.use((req, _, next) => {
 app.post('/receiveMessage', async (req, res) => {
   logExpression('Inside /receiveMessage', 2);
   logExpression(req.body, 2);
-  const round = await Round.query().findOne({id: req.body.roundId});
+  const round = await Round.query().findOne({uuid: req.body.roundId});
   round.messages.push(req.body);
   await Round.query().findById(round.id).patch({messages: round.messages});
   res.json({'status': 'acknowledged'});
@@ -118,7 +119,7 @@ app.post('/receiveRejection', (req, res) => {
 
 app.post('/receiveLog', async (req, res) => {
   console.log(req.body);
-  const round = await Round.query().findById(req.body.roundId);
+  const round = await Round.query().findOne({uuid: req.body.roundId});
   if (!round) {
     return res.json({'status': 'error'});
   }
@@ -138,16 +139,16 @@ app.post('/endRound', (_, res) => {
 });
 
 app.post('/sendRoundMetadata', async (req, res) => {
-  const round = await Round.query().withGraphFetched('[user, agent_one, agent_two, running_agents]').findById(req.body.roundId);
+  const round = await Round.query().withGraphFetched('[user, agent_one, agent_two, running_agents]').findOne({uuid: req.body.roundId});
   if (!round) {
     return res.json({'status': 'error'});
   }
 
   const agents = {one: Object.assign({}, round.agent_one), two: Object.assign({}, round.agent_two)};
   agents.one.port = round.running_agents[0].port;
-  agents.one.run_cmd.args.push('--port', agents.one.port, '--roundId', round.id);
+  agents.one.run_cmd.args.push('--port', agents.one.port, '--roundId', round.uuid);
   agents.two.port = round.running_agents[1].port;
-  agents.two.run_cmd.args.push('--port', agents.two.port, '--roundId', round.id);
+  agents.two.run_cmd.args.push('--port', agents.two.port, '--roundId', round.uuid);
 
   agent_one_process = spawn(agents.one.run_cmd.run, agents.one.run_cmd.args, {
     cwd: agents.one.cwd,
@@ -197,18 +198,18 @@ app.post('/sendRoundMetadata', async (req, res) => {
 app.post('/receiveRoundTotals', async (req, res) => {
   logExpression('Inside /receiveRoundTotals', 2);
   logExpression(req.body, 2);
-  await Round.query().findById(req.body.roundId).patch({
+  await Round.query().findOne({uuid: req.body.roundId}).patch({
     results: req.body,
     started: true,
     completed: true,
   });
 
-  const round = await Round.query().findOne({id: req.body.roundId});
+  const round = await Round.query().findOne({uiid: req.body.roundId});
   if (!round) {
     return res.render('404');
   }
 
-  const agents = await RunningAgent.query().where({round_id: req.body.roundId});
+  const agents = await RunningAgent.query().where({round_id: round.id});
   for (const agent of agents) {
     try {
       process.kill(agent.pid);
@@ -217,7 +218,7 @@ app.post('/receiveRoundTotals', async (req, res) => {
       console.error(`ERROR: could not kill agent PID - ${agent.pid} - ${exc}`);
     }
   }
-  await RunningAgent.query().delete().where({round_id: req.body.roundId});
+  await RunningAgent.query().delete().where({round_id: round.id});
 
   res.json({'status': 'acknowledged'});
 });
@@ -324,6 +325,7 @@ app.post('/user/:userId([0-9]+)/round', userSessionChecker, (req, res) => {
 
   Promise.all(promises).then((results) => {
     Round.query().insert({
+      uuid: uuidv4(),
       user_id: req.params.userId,
       agent_one_id: req.body.agent_one,
       agent_two_id: req.body.agent_two,
@@ -405,7 +407,7 @@ app.post('/user/:userId([0-9]+)/round/:roundId([0-9]+)/start', userSessionChecke
   agents.two.port = await getPort();
 
   const roundData = {
-    roundId: round.id,
+    roundId: round.uuid,
     agents: [
       {
         protocol: 'http',
