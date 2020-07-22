@@ -152,17 +152,47 @@ app.post('/sendRoundMetadata', async (req, res) => {
 
   agent_one_process = spawn(agents.one.run_cmd.run, agents.one.run_cmd.args, {
     cwd: agents.one.cwd,
-    detached: true,
-    stdio: 'ignore',
+    // detached: true,
+    stdio: 'pipe'
   });
-  agent_one_process.unref();
+  // agent_one_process.unref();
+  agent_one_process.stdout.on('data', async (data) => {
+    data = data.toString();
+    const innerRound = await Round.query().findOne({uuid: req.body.roundId});
+    await Round.query().patch({
+      agent_one_stdout: innerRound.agent_one_stdout + data
+    }).where({id: round.id});
+  });
+
+  agent_one_process.stderr.on('data', async (data) => {
+    data = data.toString();
+    const innerRound = await Round.query().findOne({uuid: req.body.roundId});
+    await Round.query().patch({
+      agent_one_stderr: innerRound.agent_one_stderr + data
+    }).where({id: round.id});
+  });
 
   agent_two_process = spawn(agents.two.run_cmd.run, agents.two.run_cmd.args, {
     cwd: agents.two.cwd,
-    detached: true,
-    stdio: 'ignore',
+    // detached: true,
+    stdio: 'pipe',
   });
-  agent_two_process.unref();
+  // agent_two_process.unref();
+  agent_two_process.stdout.on('data', async (data) => {
+    data = data.toString();
+    const innerRound = await Round.query().findOne({uuid: req.body.roundId});
+    await Round.query().patch({
+      agent_two_stdout: innerRound.agent_two_stdout + data
+    }).where({id: round.id});
+  });
+
+  agent_two_process.stderr.on('data', async (data) => {
+    data = data.toString();
+    const innerRound = await Round.query().findOne({uuid: req.body.roundId});
+    await Round.query().patch({
+      agent_two_stderr: innerRound.agent_two_stderr + data
+    }).where({id: round.id});
+  });
 
   const promises = [];
   promises.push(RunningAgent.query().patch({
