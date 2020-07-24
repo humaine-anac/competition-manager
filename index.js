@@ -228,16 +228,16 @@ app.post('/sendRoundMetadata', async (req, res) => {
 app.post('/receiveRoundTotals', async (req, res) => {
   logExpression('Inside /receiveRoundTotals', 2);
   logExpression(req.body, 2);
-  await Round.query().findOne({uuid: req.body.roundId}).patch({
+  const round = await Round.query().findOne({uuid: req.body.roundId});
+  if (!round) {
+    return res.json({status: 'error', message: 'round not found'})
+  }
+
+  await Round.query().findById(round.id).patch({
     results: req.body,
     started: true,
     completed: true,
   });
-
-  const round = await Round.query().findOne({uiid: req.body.roundId});
-  if (!round) {
-    return res.render('404');
-  }
 
   const agents = await RunningAgent.query().where({round_id: round.id});
   for (const agent of agents) {
