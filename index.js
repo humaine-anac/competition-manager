@@ -5,7 +5,7 @@ const express = require('express');
 const session = require('express-session');
 const KnexSessionStore = require('connect-session-knex')(session);
 const Knex = require('knex');
-const { Model } = require('objection');
+const { Model, ref } = require('objection');
 const http = require('http');
 const { optionsToUrl } = require('@humaine/utils/url');
 const { setLogLevel, logExpression } = require('@cisl/zepto-logger');
@@ -304,7 +304,12 @@ app.get('/agents/delete/:agentId([0-9]+)', adminSessionChecker, async (req, res)
 });
 
 app.route('/users').get(adminSessionChecker, async (req, res) => {
-  const users = await User.query();
+  const users = await User.query().select([
+    'users.*',
+    Round.query().where('user_id', ref('users.id')).count().as('totalRounds'),
+    Round.query().where('user_id', ref('users.id')).where('completed', true).count().as('completedRounds')
+  ]);
+
   res.render('users', {
     user: req.session.user,
     users: users
@@ -406,14 +411,27 @@ app.get('/user/:userId([0-9]+)/round/:roundId([0-9]+)/reset', adminSessionChecke
       console.error(`ERROR: could not kill agent PID - ${agent.pid} - ${exc}`);
     }
   }
-  await RunningAgent.query().delete().where({round_id: round.id});
-  await Round.query().update({
+
+  const promises = [];
+  promises.push(RunningAgent.query().delete().where({round_id: round.id}));
+  promises.push(Round.query().update({
     started: false,
     completed: false,
     results: null,
     messages: [],
     all_messages: [],
-  }).where({id: round.id});
+  }).where({id: round.id}));
+
+  promises.push(fetch(optionsToUrl(appSettings.serviceMap['environment-orchestrator'], '/endRound'), {
+    method: 'POST',
+    body: JSON.stringify({
+      roundId: round.id
+    }),
+    headers: { 'Content-Type': 'application/json' },
+  }));
+
+  await Promise.all(promises);
+
   res.redirect(`/user/${req.params.userId}`);
 });
 

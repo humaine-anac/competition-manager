@@ -28,6 +28,7 @@ td,th {
                 <th>email</th>
                 <th>code</th>
                 <th>admin</th>
+                <th>rounds</th>
                 <th>options</th>
             </tr>
         </thead>
@@ -38,6 +39,7 @@ td,th {
                 <td><%= user.email %></td>
                 <td><%= user.code %></td>
                 <td><%= user.admin ? 'Yes' : 'No' %></td>
+                <td><%= user.completedRounds %> / <%= user.totalRounds %></td>
                 <td><a href='/user/<%= user.id %>'>User Page</a> | <a href='/user/<%= user.id %>/delete'>Delete</a></td>
             </tr>
         <% } %>
